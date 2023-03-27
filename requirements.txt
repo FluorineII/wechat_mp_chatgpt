@@ -1,0 +1,4 @@
+openai==0.27.2
+wechatpy==1.8.18
+
+redis~=4.5.3
