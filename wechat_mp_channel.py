@@ -121,7 +121,7 @@ class WechatSubscribeAccount(object):
         for key in contentCache:
             # key 是 content｜user_id 的格式
             if '|'+from_user_id in key:
-                value = contentCache['|'+key]
+                value = contentCache[key]
                 if value.get('status') == "success":
                     cache.pop(key)
                     return value.get("data")
