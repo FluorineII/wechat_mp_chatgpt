@@ -9,7 +9,7 @@ from wechatpy.utils import check_signature
 from chatgpt.chatgpt_model import ChatGPTModel
 from common import cache
 from common.exception import CharGPTTimeOutException
-from common.log import logger
+from common import log
 from config import conf
 
 thread_pool = ThreadPoolExecutor(max_workers=8)
@@ -36,7 +36,9 @@ def get_and_reply(request):
         msg = base64.b64decode(request["body"]).decode("utf-8")
         msg = parse_message(msg)
         if msg.type == "text":
-            reply = create_reply(reply_with_gpt(msg), msg)
+            retMsg = reply_with_gpt(msg)
+            log.info("msg from gpt is {}", retMsg)
+            reply = create_reply(retMsg, msg)
         else:
             reply = create_reply("Sorry, can not handle this for now", msg)
         return reply.render()
@@ -44,7 +46,7 @@ def get_and_reply(request):
         # encryption mode
         from wechatpy.crypto import WeChatCrypto
 
-        crypto = WeChatCrypto(config["token"], config["key"], config["app_id"])
+        crypto = WeChatCrypto(config["token"], config["encoding_aes_key"], config["app_id"])
         try:
             msg = base64.b64decode(request["body"]).decode("utf-8")
             msg = crypto.decrypt_message(msg, msg_signature, timestamp, nonce)
@@ -53,18 +55,23 @@ def get_and_reply(request):
         else:
             msg = parse_message(msg)
             if msg.type == "text":
-                reply = create_reply(reply_with_gpt(msg), msg)
+                retMsg = reply_with_gpt(msg)
+                log.info("msg from gpt is {}", retMsg)
+                reply = create_reply(retMsg, msg)
             else:
                 reply = create_reply("Sorry, can not handle this for now", msg)
             return crypto.encrypt_message(reply.render(), nonce, timestamp)
 
 
 def reply_with_gpt(msg):
-    logger.info('[WX_Public] receive public msg: {}, userId: {}'.format(msg.content, msg.source))
+    log.info('[WX_Public] receive public msg: {}, userId: {}'.format(msg.content, msg.source))
     key = msg.content + '|' + msg.source
-    if cache.get(key):
+    gptCache = cache.get(key)
+    log.info("cache before gpt is {}", gptCache)
+    if gptCache:
         # request time
-        cache.get(key)['req_times'] += 1
+        gptCache['req_times'] += 1
+        cache.set_key(key, gptCache)
     return WechatSubscribeAccount().handle(msg)
 
 
@@ -76,7 +83,6 @@ class WechatSubscribeAccount(object):
         context = dict()
         context['from_user_id'] = msg.source
         key = msg.content + '|' + msg.source
-        logger.debug("cache before gpt is {}", cache.get_cache())
         res = cache.get(key)
         if not res:
             # cache[key] = {"status": "waiting", "req_times": 1}
@@ -89,8 +95,7 @@ class WechatSubscribeAccount(object):
             cache.pop(key)
             return res.get("data")
 
-        if cache.get(key)['req_times'] == 3 and count >= 4:
-            logger.info("微信超时3次")
+        if cache.get(key)['req_times'] >= 2 and count >= 4:
             return "已开始处理，请稍等片刻后输入\"继续\"查看回复"
 
         if count <= 5:
@@ -103,20 +108,22 @@ class WechatSubscribeAccount(object):
     def _do_send(self, query, context):
         key = query + '|' + context['from_user_id']
         reply_text = ChatGPTModel().reply(query, context)
-        logger.info('[WX_Public] reply content: {}'.format(reply_text))
+        log.info('[WX_Public] reply content: {}'.format(reply_text))
         newCache = cache.get(key)
         newCache['status'] = "success"
         newCache['data'] = reply_text
         # cache[key] = newCache
         cache.set_key(key, newCache)
-        logger.debug("cache after gpt is {}", cache.get_cache())
+        log.info("cache after gpt is {}", cache.get_cache())
 
     def get_un_send_content(self, from_user_id):
-        value = cache.get(from_user_id)
-        if not value:
-            return "目前无等待回复信息，请输入对话"
-        if value.get('status') == "success":
-            cache.pop(from_user_id)
-            return value.get("data")
-        return "还在处理中，请稍后再试"
-
+        contentCache = cache.get_cache()
+        for key in contentCache:
+            # key 是 content｜user_id 的格式
+            if '|'+from_user_id in key:
+                value = contentCache['|'+key]
+                if value.get('status') == "success":
+                    cache.pop(key)
+                    return value.get("data")
+                return "还在处理中，请稍后再试"
+        return "目前无等待回复信息，请输入对话"

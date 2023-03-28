@@ -2,7 +2,7 @@ import json
 import os
 import time
 
-from common.log import logger
+from common import log
 
 # config_path = "code/localStorage.json"
 cache_path = "/tmp/localStorage.json"
@@ -15,8 +15,8 @@ def get(key):
 
 def get_cache():
     if not os.path.exists(cache_path):
-        logger.info('配置文件不存在，创建新文件')
-        save_file({"timestamp"})
+        log.info('配置文件不存在，创建新文件')
+        save_file({})
         return {}
 
     cache_str = read_file(cache_path)

@@ -22,33 +22,33 @@ def close_log():
 def debug(arg, *args):
     if SWITCH:
         if len(args) == 0:
-            logger.debug(arg)
+            log.debug(arg)
         else:
-            logger.debug(arg.format(*args))
+            log.debug(arg.format(*args))
 
 def info(arg, *args):
     if SWITCH:
         if len(args) == 0:
-            logger.info(arg)
+            log.info(arg)
         else:
-            logger.info(arg.format(*args))
+            log.info(arg.format(*args))
 
 
 def warn(arg, *args):
     if len(args) == 0:
-        logger.warning(arg)
+        log.warning(arg)
     else:
-        logger.warning(arg.format(*args))
+        log.warning(arg.format(*args))
 
 def error(arg, *args):
     if len(args) == 0:
-        logger.error(arg)
+        log.error(arg)
     else:
-        logger.error(arg.format(*args))
+        log.error(arg.format(*args))
 
 def exception(e):
-    logger.exception(e)
+    log.exception(e)
 
 
 # 日志句柄
-logger = _get_logger()
+log = _get_logger()

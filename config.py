@@ -3,17 +3,17 @@
 import json
 import os
 
-from common.log import logger
+from common import log
 
 config = {}
-# config_path = "code/config.json"  # 华为functionGraph的文件在code目录下
+#config_path = "code/config.json"  # 华为functionGraph的文件在code目录下
 config_path = "config.json"
 
 
 def load_config():
     global config
     config = get_config()
-    logger.info("Load config success")
+    log.info("Load config success")
     return config
 
 

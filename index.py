@@ -1,12 +1,11 @@
 import base64
 import json
-import time
 
 import config
 import wechat_mp_channel
 from common import cache
 from common.exception import CharGPTTimeOutException
-from common.log import logger
+from common import log
 
 global htmlResponse
 
@@ -14,7 +13,7 @@ global htmlResponse
 # -*- coding:utf-8 -*-
 def handler(event, context):
     global htmlResponse
-    logger.info('event is {}', event)
+    log.info('event is {}', event)
     config.load_config()
     cache.check_and_refresh()
 
@@ -30,8 +29,8 @@ def handler(event, context):
         }
     except CharGPTTimeOutException:
         # 等待五秒，函数继续处理，接口自然超时
-        logger.info("chat gpt time out wait to retry")
-        time.sleep(5)
+        log.info("chat gpt time out wait to retry")
+        #time.sleep(5)
         htmlResponse = {
             'statusCode': 403,
             'isBase64Encoded': True,
