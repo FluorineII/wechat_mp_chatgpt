@@ -95,7 +95,7 @@ class WechatSubscribeAccount(object):
             cache.pop(key)
             return res.get("data")
 
-        if cache.get(key)['req_times'] >= 2 and count >= 4:
+        if cache.get(key)['req_times'] >= 3 and count >= 4:
             return "已开始处理，请稍等片刻后输入\"继续\"查看回复"
 
         if count <= 5:
