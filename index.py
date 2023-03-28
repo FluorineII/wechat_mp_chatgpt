@@ -1,12 +1,12 @@
-import os
-import json
 import base64
+import json
 import time
 
 import config
 import wechat_mp_channel
+from common import cache
 from common.exception import CharGPTTimeOutException
-from common.redisCache import RedisCache
+from common.log import logger
 
 global htmlResponse
 
@@ -14,24 +14,23 @@ global htmlResponse
 # -*- coding:utf-8 -*-
 def handler(event, context):
     global htmlResponse
-    print('event is ', event)
-
+    logger.info('event is {}', event)
     config.load_config()
-    RedisCache.init(context)
+    cache.check_and_refresh()
 
     try:
-        gptreq = wechat_mp_channel.get_and_reply(event)
+        gptResp = wechat_mp_channel.get_and_reply(event)
         htmlResponse = {
             'statusCode': 200,
             'isBase64Encoded': True,
             'headers': {
                 "Content-type": "text/html; charset=utf-8"
             },
-            'body': base64.b64encode(str(gptreq).encode(encoding="utf-8")).decode(),
+            'body': base64.b64encode(str(gptResp).encode(encoding="utf-8")).decode(),
         }
     except CharGPTTimeOutException:
-        # 等待五秒，接口自然超时
-        print("chat gpt time out wait to retry")
+        # 等待五秒，函数继续处理，接口自然超时
+        logger.info("chat gpt time out wait to retry")
         time.sleep(5)
         htmlResponse = {
             'statusCode': 403,

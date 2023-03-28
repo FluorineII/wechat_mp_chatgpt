@@ -6,16 +6,16 @@ from wechatpy import parse_message, create_reply
 from wechatpy.exceptions import InvalidSignatureException, InvalidAppIdException
 from wechatpy.utils import check_signature
 
-from chatgpt.channel import Channel
 from chatgpt.chatgpt_model import ChatGPTModel
+from common import cache
 from common.exception import CharGPTTimeOutException
 from common.log import logger
 from config import conf
 
 thread_pool = ThreadPoolExecutor(max_workers=8)
-cache = {}
 
-def get_and_reply(request, msg=None):
+
+def get_and_reply(request):
     config = conf()
     signParam = request.get("queryStringParameters", "")
     signature = signParam.get("signature", "")
@@ -68,7 +68,7 @@ def reply_with_gpt(msg):
     return WechatSubscribeAccount().handle(msg)
 
 
-class WechatSubscribeAccount(Channel):
+class WechatSubscribeAccount(object):
     def handle(self, msg, count=1):
         if msg.content == "继续":
             return self.get_un_send_content(msg.source)
@@ -76,15 +76,14 @@ class WechatSubscribeAccount(Channel):
         context = dict()
         context['from_user_id'] = msg.source
         key = msg.content + '|' + msg.source
-        print("cache before gpt is", cache)
+        logger.debug("cache before gpt is {}", cache.get_cache())
         res = cache.get(key)
         if not res:
-            cache[key] = {"status": "waiting", "req_times": 1}
-            #cache.set_key(key, {"status": "waiting", "req_times": 1})
+            # cache[key] = {"status": "waiting", "req_times": 1}
+            cache.set_key(key, {"status": "waiting", "req_times": 1})
             thread_pool.submit(self._do_send, msg.content, context)
 
         res = cache.get(key)
-        #logger.info("count={}, res={}".format(count, res))
         if res.get('status') == 'success':
             res['status'] = "done"
             cache.pop(key)
@@ -108,16 +107,16 @@ class WechatSubscribeAccount(Channel):
         newCache = cache.get(key)
         newCache['status'] = "success"
         newCache['data'] = reply_text
-        cache[key] = newCache
-        print("cache after gpt is", cache)
+        # cache[key] = newCache
+        cache.set_key(key, newCache)
+        logger.debug("cache after gpt is {}", cache.get_cache())
 
     def get_un_send_content(self, from_user_id):
-        contentInCache = cache
-        for key in contentInCache:
-            if from_user_id in key:
-                value = contentInCache[key]
-                if value.get('status') == "success":
-                    cache.pop(key)
-                    return value.get("data")
-                return "还在处理中，请稍后再试"
-        return "目前无等待回复信息，请输入对话"
+        value = cache.get(from_user_id)
+        if not value:
+            return "目前无等待回复信息，请输入对话"
+        if value.get('status') == "success":
+            cache.pop(from_user_id)
+            return value.get("data")
+        return "还在处理中，请稍后再试"
+

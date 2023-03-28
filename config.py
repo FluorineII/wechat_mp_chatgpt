@@ -3,27 +3,33 @@
 import json
 import os
 
+from common.log import logger
+
 config = {}
+# config_path = "code/config.json"  # 华为functionGraph的文件在code目录下
+config_path = "config.json"
 
 
 def load_config():
     global config
-    config = {
-        "api_key": "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",
-        "model": "gpt-3.5-turbo",
-        "conversation_max_tokens": 1000,
-        "character_desc": "你是ChatGPT, 一个由OpenAI训练的大型语言模型, 你旨在回答并解决人们的任何问题，并且可以使用多种语言与人交流。",
-        "token": "huqi",
-        "key": "yZnPNRSU3ZDKrynJc8tZu5E9ejkibferuC9JXpYVXMQ",
-        "app_id": "wx7876c808fadac136"
-    }
-
-    print("Load config success")
+    config = get_config()
+    logger.info("Load config success")
     return config
 
 
-def get_root():
-    return os.path.dirname(os.path.abspath(__file__))
+def get_config():
+    if not os.path.exists(config_path):
+        raise Exception('配置文件不存在')
+
+    cache_str = read_file(config_path)
+    # 将json字符串反序列化为dict类型
+    cache = json.loads(cache_str)
+    return cache
+
+
+def read_file(path):
+    with open(path, mode='r', encoding='utf-8') as f:
+        return f.read()
 
 
 def conf():
