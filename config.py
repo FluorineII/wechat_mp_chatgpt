@@ -6,8 +6,8 @@ import os
 from common import log
 
 config = {}
-#config_path = "code/config.json"  # 华为functionGraph的文件在code目录下
-config_path = "config.json"
+config_path = "code/config.json"  # 华为functionGraph的文件在code目录下
+#config_path = "config.json"
 
 
 def load_config():
