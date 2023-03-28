@@ -13,7 +13,9 @@
 2. 创建函数**testGPT**，如图所示，地区选择新加坡，运行时选择python3.9
 ![screenshot-20230328-203646.png](img%2Fscreenshot-20230328-203646.png)
 ### 二、代码处理
-1. 下载代码，修改代码config配置
+1. 下载release
+2. 将archive.zip上传至华为云functionGraph **testGPT**
+修改代码config.json配置
 ```
 {
   "api_key": "**", // chatgpt的apikey
@@ -25,12 +27,9 @@
   "app_id": "**" // 微信公众号的appid
 }
 ```
-
-2. 在目录下运行 sh build.sh
-3. 将archive.zip上传至华为云functionGraph **testGPT**
-4. 将dependency.zip上传至华为云依赖包管理
-5. **testGPT**函数配置中选择依赖包
-6. 点击创建触发器，创建api接口，得到函数的测试链接
+3. 将dependency.zip上传至华为云依赖包管理
+4. **testGPT**函数配置中选择依赖包
+5. 点击创建触发器，创建api接口，得到函数的测试链接
 >该链接可用于测试公众号，不可用于真实公众号，微信屏蔽了此类链接
 ![screenshot-20230328-205249.png](img%2Fscreenshot-20230328-205249.png)
 此时即可完成函数配置，部署函数之后，会生成接口已经可用
