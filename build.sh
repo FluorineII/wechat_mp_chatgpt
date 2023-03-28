@@ -1,1 +1,1 @@
-zip -r release/archive.zip .
+zip -r release/archive.zip ./ -x "img/*" "release/*" ".*"
