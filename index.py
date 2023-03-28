@@ -28,9 +28,7 @@ def handler(event, context):
             'body': base64.b64encode(str(gptResp).encode(encoding="utf-8")).decode(),
         }
     except CharGPTTimeOutException:
-        # 等待五秒，函数继续处理，接口自然超时
         log.info("chat gpt time out wait to retry")
-        #time.sleep(5)
         htmlResponse = {
             'statusCode': 403,
             'isBase64Encoded': True,
